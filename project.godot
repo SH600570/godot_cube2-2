@@ -1,0 +1,79 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Cube2"
+config/description="二阶魔方教学工具"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.6")
+config/icon="res://icon.png"
+
+[display]
+
+winsize/width=800
+winsize/height=600
+
+[input]
+
+rotate_u={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"id": 16,
+"index": 0,
+"input_type": 1
+}]
+}
+rotate_d={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"id": 17,
+"index": 0,
+"input_type": 1
+}]
+}
+rotate_l={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"id": 14,
+"index": 0,
+"input_type": 1
+}]
+}
+rotate_r={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"id": 15,
+"index": 0,
+"input_type": 1
+}]
+}
+rotate_f={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"id": 8,
+"index": 0,
+"input_type": 1
+}]
+}
+rotate_b={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"id": 9,
+"index": 0,
+"input_type": 1
+}]
+}

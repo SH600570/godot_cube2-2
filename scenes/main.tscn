@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://dnqeleucxblcv"]
+
+[ext_resource type="Script" uid="uid://ja4l3obao0ky" path="res://scripts/Cube2x2.gd" id="1"]
+[ext_resource type="Script" uid="uid://by46hs00iuwja" path="res://scripts/UIController.gd" id="2"]
+
+[node name="Main" type="Node" unique_id=1360712085]
+
+[node name="_#Cube2x2" type="Node3D" parent="." unique_id=398422202]
+script = ExtResource("1")
+
+[node name="_#UIController" type="Node" parent="." unique_id=1116088140]
+script = ExtResource("2")

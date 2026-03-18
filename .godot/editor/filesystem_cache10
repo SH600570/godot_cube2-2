@@ -1,0 +1,12 @@
+63f7b34db8d8cdea90c76aacccf841ec
+::res://::1773822285
+icon.png::CompressedTexture2D::6195034318379659927::1773818752::1773817797::0::::<><><>0<>0<>f30f7739f80e72d96a8447e3c39aba8d<>::
+README.md::TextFile::-1::1773818752::0::1::::<><><>0<>0<><>::
+::res://assets/::1773801630
+::res://scenes/::1773818309
+CubePiece.tscn::PackedScene::-1::1773818451::0::1::::<><><>0<>0<><>::res://scripts/CubePiece.gd
+main.tscn::PackedScene::8105009815253847869::1773818309::0::1::::<><><>0<>0<><>::uid://ja4l3obao0ky::::res://scripts/Cube2x2.gd<>uid://by46hs00iuwja::::res://scripts/UIController.gd
+::res://scripts/::1773817797
+Cube2x2.gd::GDScript::633481521592553568::1773818303::0::1::::Cube2x2<>Node3D<><>0<>0<><>::
+CubePiece.gd::GDScript::5031230864340235063::1773818412::0::1::::CubePiece<>Node3D<><>0<>0<><>::
+UIController.gd::GDScript::4132715598394507530::1773804937::0::1::::UIController<>Node<><>0<>0<><>::
