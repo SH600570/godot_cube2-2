@@ -5,8 +5,16 @@
 
 [node name="Main" type="Node" unique_id=1360712085]
 
-[node name="_#Cube2x2" type="Node3D" parent="." unique_id=398422202]
+[node name="Cube2x2" type="Node3D" parent="." unique_id=398422202]
 script = ExtResource("1")
 
-[node name="_#UIController" type="Node" parent="." unique_id=1116088140]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1086538194]
+transform = Transform3D(0.8987528, -0.010906803, 0.43831992, -0.10442959, 0.9655966, 0.23815474, -0.42583773, -0.25981587, 0.8666937, 6, 5.278892, 6.242255)
+current = true
+fov = 74.43894
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1169199633]
+transform = Transform3D(0.52532196, 0.7240368, 0.4469983, 0, 0.52532196, -0.8509035, -0.8509035, 0.4469983, 0.27596316, 10, 10, 10)
+
+[node name="UIController" type="Node" parent="." unique_id=1116088140]
 script = ExtResource("2")

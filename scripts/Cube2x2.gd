@@ -39,17 +39,77 @@ func _ready():
 	create_pieces()
 
 func create_pieces():
-	# 加载 CubePiece 场景
-	var piece_scene = load("res://scenes/CubePiece.tscn")
-	if piece_scene == null:
-		print("Error: Failed to load CubePiece.tscn")
-		return
-	
 	# 生成8个角块的逻辑坐标
+	print("Creating cube pieces...")
 	for pos in piece_positions:
-		var piece = piece_scene.instantiate()
+		# 动态创建 CubePiece 节点
+		var piece = CubePiece.new()
 		piece.logic_pos = pos
-		piece.position = pos * 0.5  # 缩放位置
+		piece.position = pos * 0.8  # 增大魔方大小，确保相机能够看到
+		print("Created piece at position: " + str(piece.position))
+		
+		# 创建立方体本体
+		var cube_body = MeshInstance3D.new()
+		cube_body.name = "CubeBody"
+		var box_mesh = BoxMesh.new()
+		box_mesh.size = Vector3(1, 1, 1)
+		cube_body.mesh = box_mesh
+		# 添加默认材质
+		var material = StandardMaterial3D.new()
+		material.albedo_color = Color(0.5, 0.5, 0.5)
+		cube_body.material_override = material
+		piece.add_child(cube_body)
+		
+		# 创建各个面
+		var plane_mesh = PlaneMesh.new()
+		plane_mesh.size = Vector2(1, 1)
+		
+		# X+ 面
+		var face_xp = MeshInstance3D.new()
+		face_xp.name = "Face_X+"
+		face_xp.position = Vector3(0.5, 0, 0)
+		face_xp.mesh = plane_mesh
+		piece.add_child(face_xp)
+		
+		# X- 面
+		var face_xn = MeshInstance3D.new()
+		face_xn.name = "Face_X-"
+		face_xn.position = Vector3(-0.5, 0, 0)
+		face_xn.mesh = plane_mesh
+		face_xn.rotation = Vector3(0, 180, 0)
+		piece.add_child(face_xn)
+		
+		# Y+ 面
+		var face_yp = MeshInstance3D.new()
+		face_yp.name = "Face_Y+"
+		face_yp.position = Vector3(0, 0.5, 0)
+		face_yp.mesh = plane_mesh
+		face_yp.rotation = Vector3(90, 0, 0)
+		piece.add_child(face_yp)
+		
+		# Y- 面
+		var face_yn = MeshInstance3D.new()
+		face_yn.name = "Face_Y-"
+		face_yn.position = Vector3(0, -0.5, 0)
+		face_yn.mesh = plane_mesh
+		face_yn.rotation = Vector3(-90, 0, 0)
+		piece.add_child(face_yn)
+		
+		# Z+ 面
+		var face_zp = MeshInstance3D.new()
+		face_zp.name = "Face_Z+"
+		face_zp.position = Vector3(0, 0, 0.5)
+		face_zp.mesh = plane_mesh
+		face_zp.rotation = Vector3(0, 90, 0)
+		piece.add_child(face_zp)
+		
+		# Z- 面
+		var face_zn = MeshInstance3D.new()
+		face_zn.name = "Face_Z-"
+		face_zn.position = Vector3(0, 0, -0.5)
+		face_zn.mesh = plane_mesh
+		face_zn.rotation = Vector3(0, -90, 0)
+		piece.add_child(face_zn)
 		
 		# 设置颜色
 		set_piece_colors(piece)
@@ -133,6 +193,8 @@ func rotate_pieces(pieces_to_rotate: Array, axis: Vector3, angle: float) -> void
 		pos_to_piece.erase(piece.logic_pos)
 		# 更新逻辑坐标
 		piece.logic_pos = piece.logic_pos.rotated(axis, deg_to_rad(angle))
+		# 更新实际位置
+		piece.position = piece.logic_pos * 0.8
 		# 添加新的位置映射
 		pos_to_piece[piece.logic_pos] = piece
 		# 重新设置颜色和隐藏面

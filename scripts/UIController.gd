@@ -27,10 +27,10 @@ func create_status_label():
 	status_label.add_theme_color_override("font_color", Color(0, 0, 0))
 	add_child(status_label)
 
-func _unhandled_input(event):
+func _input(event):
 	# 处理键盘输入
 	if event is InputEventKey and event.pressed:
-		match event.scancode:
+		match event.keycode:
 			KEY_U: 
 				cube.rotate_U()
 				update_status()

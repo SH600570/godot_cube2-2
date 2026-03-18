@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://i21c0rgehed0"]
+
+[ext_resource type="Script" path="res://scripts/Cube2x2.gd" id="1"]
+
+[node name="Test" type="Node3D"]
+
+[node name="Cube2x2" type="Node3D" parent="."]
+script = ExtResource("1")
