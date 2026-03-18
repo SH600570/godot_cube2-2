@@ -39,12 +39,17 @@ func _ready():
 	create_pieces()
 
 func create_pieces():
+	# 加载 CubePiece 场景
+	var piece_scene = load("res://scenes/CubePiece.tscn")
+	if piece_scene == null:
+		print("Error: Failed to load CubePiece.tscn")
+		return
+	
 	# 生成8个角块的逻辑坐标
 	for pos in piece_positions:
-		var piece_scene = load("res://scenes/CubePiece.tscn")
 		var piece = piece_scene.instantiate()
 		piece.logic_pos = pos
-		piece.translation = pos * 0.5  # 缩放位置
+		piece.position = pos * 0.5  # 缩放位置
 		
 		# 设置颜色
 		set_piece_colors(piece)

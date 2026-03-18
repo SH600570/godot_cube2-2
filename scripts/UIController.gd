@@ -5,9 +5,16 @@ var status_label: Label
 
 func _ready():
 	# 获取 Cube2x2 实例
-	cube = get_node("../Cube2x2")
-	# 注册输入事件
-	set_process_unhandled_input(true)
+	# 查找 Cube2x2 类型的节点
+	var cube_nodes = get_parent().get_children()
+	for node in cube_nodes:
+		if node is Cube2x2:
+			cube = node
+			break
+	if cube == null:
+		print("Error: Failed to find Cube2x2 node")
+		return
+
 	# 创建状态显示标签
 	create_status_label()
 
