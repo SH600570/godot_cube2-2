@@ -30,6 +30,62 @@ var color_values = {
 	"orange": 2
 }
 
+## 空间位置到索引的映射（根据README中的定义）
+var pos_to_index = {
+	Vector3(0.5, 0.5, 0.5): 0,    # TRF
+	Vector3(-0.5, 0.5, 0.5): 1,   # TFL
+	Vector3(-0.5, 0.5, -0.5): 2,  # TLB
+	Vector3(0.5, 0.5, -0.5): 3,   # TBR
+	Vector3(0.5, -0.5, -0.5): 4,  # DRB
+	Vector3(-0.5, -0.5, -0.5): 5, # DBL
+	Vector3(-0.5, -0.5, 0.5): 6,  # DLF
+	Vector3(0.5, -0.5, 0.5): 7    # DFR
+}
+
+## 每个位置的颜色组合到朝向编码的映射
+var orientation_mapping = {
+	0: { # TRF位置
+		["white", "blue", "red"]: 0,   # wbr
+		["red", "white", "blue"]: 1,   # rwb
+		["blue", "red", "white"]: 2    # brw
+	},
+	1: { # TFL位置
+		["white", "red", "green"]: 0,  # wrg
+		["green", "white", "red"]: 1,  # gwr
+		["red", "green", "white"]: 2   # rgw
+	},
+	2: { # TLB位置
+		["white", "green", "orange"]: 0, # wgo
+		["orange", "white", "green"]: 1, # ogw
+		["white", "orange", "green"]: 2  # wog
+	},
+	3: { # TBR位置
+		["white", "orange", "blue"]: 0,  # wob
+		["blue", "white", "orange"]: 1,  # bwo
+		["orange", "blue", "white"]: 2   # obw
+	},
+	4: { # DRB位置
+		["yellow", "blue", "orange"]: 0, # ybo
+		["orange", "yellow", "blue"]: 1, # oyb
+		["blue", "orange", "yellow"]: 2  # boy
+	},
+	5: { # DBL位置
+		["yellow", "orange", "green"]: 0, # yog
+		["green", "yellow", "orange"]: 1, # gyo
+		["orange", "green", "yellow"]: 2  # ogy
+	},
+	6: { # DLF位置
+		["yellow", "green", "red"]: 0,   # ygr
+		["red", "yellow", "green"]: 1,   # ryg
+		["green", "red", "yellow"]: 2    # gry
+	},
+	7: { # DFR位置
+		["orange", "red", "blue"]: 0,    # orb
+		["blue", "orange", "red"]: 1,    # bor
+		["red", "blue", "orange"]: 2     # rbo
+	}
+}
+
 ## 角块逻辑坐标的固定顺序（用于状态计算）
 ## 注意：逻辑坐标用 ±0.5，让相邻角块中心间距正好是 1（即角块宽度）
 var piece_positions = [
@@ -147,6 +203,37 @@ func rotate_B() -> void:
 	var pieces_to_rotate = get_pieces_by_z(-1)
 	rotate_pieces(pieces_to_rotate, Vector3.FORWARD, 90)
 
+# 逆时针旋转函数
+func rotate_R_counterclockwise() -> void:
+	# 右层逆时针旋转
+	var pieces_to_rotate = get_pieces_by_x(1)
+	rotate_pieces(pieces_to_rotate, Vector3.RIGHT, 90)
+
+func rotate_L_counterclockwise() -> void:
+	# 左层逆时针旋转
+	var pieces_to_rotate = get_pieces_by_x(-1)
+	rotate_pieces(pieces_to_rotate, Vector3.RIGHT, -90)
+
+func rotate_U_counterclockwise() -> void:
+	# 上层逆时针旋转
+	var pieces_to_rotate = get_pieces_by_y(1)
+	rotate_pieces(pieces_to_rotate, Vector3.UP, 90)
+
+func rotate_D_counterclockwise() -> void:
+	# 下层逆时针旋转
+	var pieces_to_rotate = get_pieces_by_y(-1)
+	rotate_pieces(pieces_to_rotate, Vector3.UP, -90)
+
+func rotate_F_counterclockwise() -> void:
+	# 前层逆时针旋转
+	var pieces_to_rotate = get_pieces_by_z(1)
+	rotate_pieces(pieces_to_rotate, Vector3.FORWARD, 90)
+
+func rotate_B_counterclockwise() -> void:
+	# 后层逆时针旋转
+	var pieces_to_rotate = get_pieces_by_z(-1)
+	rotate_pieces(pieces_to_rotate, Vector3.FORWARD, -90)
+
 func rotate_pieces(pieces_to_rotate: Array, axis: Vector3, angle: float) -> void:
 	# 以临时 pivot 实现“整层刚体旋转”，避免局部轴/浮点误差导致逻辑映射失效
 	if pieces_to_rotate.is_empty():
@@ -196,9 +283,43 @@ func _color_to_value(c: Color) -> int:
 			return int(color_values[name])
 	return 0
 
-func get_cube_state() -> String:
-	# 计算魔方状态为8位3进制数
-	var state = ""
+func _get_piece_orientation(piece: CubePiece) -> int:
+	# 获取角块的可见颜色组合，用于计算朝向编码
+	var visible_colors = []
+	
+	# 获取三个可见面的颜色
+	if piece.logic_pos.x > 0:
+		visible_colors.append(_color_to_name(piece.get_face_color("Face_X+")))
+	elif piece.logic_pos.x < 0:
+		visible_colors.append(_color_to_name(piece.get_face_color("Face_X-")))
+	
+	if piece.logic_pos.y > 0:
+		visible_colors.append(_color_to_name(piece.get_face_color("Face_Y+")))
+	elif piece.logic_pos.y < 0:
+		visible_colors.append(_color_to_name(piece.get_face_color("Face_Y-")))
+	
+	if piece.logic_pos.z > 0:
+		visible_colors.append(_color_to_name(piece.get_face_color("Face_Z+")))
+	elif piece.logic_pos.z < 0:
+		visible_colors.append(_color_to_name(piece.get_face_color("Face_Z-")))
+	
+	# 获取角块的位置索引
+	var pos_index = pos_to_index.get(piece.logic_pos, 0)
+	
+	# 根据颜色组合查找朝向编码
+	var mapping = orientation_mapping.get(pos_index, {})
+	return mapping.get(visible_colors, 0)
+
+func _color_to_name(c: Color) -> String:
+	# 将颜色转换为名称
+	for name in colors.keys():
+		if c.is_equal_approx(colors[name]):
+			return name
+	return "white"
+
+func get_cube_state() -> Array:
+	# 计算魔方状态为8个数字的数组
+	var state = []
 	
 	# 按照固定顺序检查每个角块的位置
 	for target_pos in piece_positions:
@@ -206,10 +327,14 @@ func get_cube_state() -> String:
 		var current_piece = pos_to_piece.get(target_pos)
 		
 		if current_piece:
-			# 按 README：每个角块的状态由其“当前朝上的贴纸颜色”(世界 Y+) 决定
-			var up_color: Color = (current_piece as CubePiece).get_color_facing_world_dir(Vector3.UP)
-			state += str(_color_to_value(up_color))
+			# 获取位置索引
+			var pos_index = pos_to_index.get(target_pos, 0)
+			# 获取朝向编码
+			var orientation = _get_piece_orientation(current_piece)
+			# 计算5位2进制编码的10进制值
+			var encoded_value = (pos_index << 2) | orientation
+			state.append(encoded_value)
 		else:
-			state += "0"
+			state.append(0)
 	
 	return state
