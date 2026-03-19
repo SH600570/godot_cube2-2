@@ -5,22 +5,22 @@
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_f62if"]
-size = Vector2(1, 1)
+size = Vector2(0.94, 0.94)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_pcdd6"]
-size = Vector2(1, 1)
+size = Vector2(0.94, 0.94)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_uwrkx"]
-size = Vector2(1, 1)
+size = Vector2(0.94, 0.94)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_buoa6"]
-size = Vector2(1, 1)
+size = Vector2(0.94, 0.94)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_wr0vw"]
-size = Vector2(1, 1)
+size = Vector2(0.94, 0.94)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1"]
-size = Vector2(1, 1)
+size = Vector2(0.94, 0.94)
 
 [node name="CubePiece" type="Node3D" unique_id=2081304010]
 script = ExtResource("1")

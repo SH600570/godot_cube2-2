@@ -2,6 +2,14 @@
 
 [ext_resource type="Script" uid="uid://ja4l3obao0ky" path="res://scripts/Cube2x2.gd" id="1"]
 [ext_resource type="Script" uid="uid://by46hs00iuwja" path="res://scripts/UIController.gd" id="2"]
+[ext_resource type="Script" uid="uid://8rvyx1ourcv5" path="res://scripts/OrbitCamera.gd" id="3"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.08, 0.1, 0.14, 1)
+ambient_light_source = 1
+ambient_light_color = Color(0.2, 0.22, 0.3, 1)
+ambient_light_energy = 1.05
 
 [node name="Main" type="Node" unique_id=1360712085]
 
@@ -12,9 +20,39 @@ script = ExtResource("1")
 transform = Transform3D(0.8987528, -0.010906803, 0.43831992, -0.10442959, 0.9655966, 0.23815474, -0.42583773, -0.25981587, 0.8666937, 6, 5.278892, 6.242255)
 current = true
 fov = 74.43894
+script = ExtResource("3")
+target_path = NodePath("../Cube2x2")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1169199633]
 transform = Transform3D(0.52532196, 0.7240368, 0.4469983, 0, 0.52532196, -0.8509035, -0.8509035, 0.4469983, 0.27596316, 10, 10, 10)
+light_energy = 1.4
+
+[node name="FillLight" type="OmniLight3D" parent="." unique_id=122009991]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 1.8, 2.6)
+light_color = Color(0.75, 0.8, 1, 1)
+light_energy = 0.85
+omni_range = 16.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=998877666]
+environment = SubResource("Environment_1")
 
 [node name="UIController" type="Node" parent="." unique_id=1116088140]
 script = ExtResource("2")
+
+[node name="TopDownLight" type="OmniLight3D" parent="." unique_id=447446156]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.2, 0)
+light_color = Color(1, 0.98, 0.93, 1)
+light_energy = 1.7
+omni_range = 20.0
+
+[node name="BackWarmLight" type="OmniLight3D" parent="." unique_id=623450111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 1.6, -3.2)
+light_color = Color(1, 0.82, 0.64, 1)
+light_energy = 1.05
+omni_range = 18.0
+
+[node name="RimFillLight" type="OmniLight3D" parent="." unique_id=623450112]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 2.4, -2.8)
+light_color = Color(0.66, 0.74, 0.9, 1)
+light_energy = 0.55
+omni_range = 18.0

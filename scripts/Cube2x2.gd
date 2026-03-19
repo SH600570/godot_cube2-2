@@ -8,8 +8,15 @@ class_name Cube2x2 extends Node3D
 var pieces = []
 ## 逻辑坐标 -> 角块 的映射，用于 O(1) 找到某个位置的块
 var pos_to_piece = {}
-## 相邻角块中心间距（与角块宽度一致），保证拼成一个几乎无缝的正方体
-const PIECE_SPACING := 1.0
+## 相邻角块中心间距（略大于 1），让 8 个角块之间出现可见裂缝
+const PIECE_SPACING := 1.03
+## 仅用于显示大小，不改变逻辑坐标/状态计算。值越大，屏幕里看起来越大
+const DISPLAY_SCALE := 1.8
+## 仅用于屏幕构图，把魔方整体稍微上移到画面中心
+const DISPLAY_OFFSET := Vector3(0, 1.45, 0)
+## 项目坐标约定：前面 = +Z，后面 = -Z（不使用 Godot 内置 FORWARD/BACK 以免混淆）
+const DIR_FRONT := Vector3(0, 0, 1)
+const DIR_BACK := Vector3(0, 0, -1)
 ## 各个颜色在屏幕上的实际 RGB 值
 var colors = {
 	"white": Color(1, 1, 1),
@@ -45,44 +52,44 @@ var pos_to_index = {
 ## 每个位置的颜色组合到朝向编码的映射
 var orientation_mapping = {
 	0: { # TRF位置
-		["white", "blue", "red"]: 0,   # wbr
-		["red", "white", "blue"]: 1,   # rwb
-		["blue", "red", "white"]: 2    # brw
+		"white,blue,red": 0,   # wbr
+		"red,white,blue": 1,   # rwb
+		"blue,red,white": 2    # brw
 	},
 	1: { # TFL位置
-		["white", "red", "green"]: 0,  # wrg
-		["green", "white", "red"]: 1,  # gwr
-		["red", "green", "white"]: 2   # rgw
+		"white,red,green": 0,  # wrg
+		"green,white,red": 1,  # gwr
+		"red,green,white": 2   # rgw
 	},
 	2: { # TLB位置
-		["white", "green", "orange"]: 0, # wgo
-		["orange", "white", "green"]: 1, # ogw
-		["white", "orange", "green"]: 2  # wog
+		"white,green,orange": 0, # wgo
+		"orange,white,green": 1, # owg
+		"green,orange,white": 2  # gow
 	},
 	3: { # TBR位置
-		["white", "orange", "blue"]: 0,  # wob
-		["blue", "white", "orange"]: 1,  # bwo
-		["orange", "blue", "white"]: 2   # obw
+		"white,orange,blue": 0,  # wob
+		"blue,white,orange": 1,  # bwo
+		"orange,blue,white": 2   # obw
 	},
 	4: { # DRB位置
-		["yellow", "blue", "orange"]: 0, # ybo
-		["orange", "yellow", "blue"]: 1, # oyb
-		["blue", "orange", "yellow"]: 2  # boy
+		"yellow,blue,orange": 0, # ybo
+		"orange,yellow,blue": 1, # oyb
+		"blue,orange,yellow": 2  # boy
 	},
 	5: { # DBL位置
-		["yellow", "orange", "green"]: 0, # yog
-		["green", "yellow", "orange"]: 1, # gyo
-		["orange", "green", "yellow"]: 2  # ogy
+		"yellow,orange,green": 0, # yog
+		"green,yellow,orange": 1, # gyo
+		"orange,green,yellow": 2  # ogy
 	},
 	6: { # DLF位置
-		["yellow", "green", "red"]: 0,   # ygr
-		["red", "yellow", "green"]: 1,   # ryg
-		["green", "red", "yellow"]: 2    # gry
+		"yellow,green,red": 0,   # ygr
+		"red,yellow,green": 1,   # ryg
+		"green,red,yellow": 2    # gry
 	},
 	7: { # DFR位置
-		["orange", "red", "blue"]: 0,    # orb
-		["blue", "orange", "red"]: 1,    # bor
-		["red", "blue", "orange"]: 2     # rbo
+		"yellow,red,blue": 0,    # yrb
+		"blue,yellow,red": 1,    # byr
+		"red,blue,yellow": 2     # rby
 	}
 }
 
@@ -93,13 +100,16 @@ var piece_positions = [
 	Vector3(-0.5, 0.5, 0.5),   # 左上前   (左:x<0, 上:y>0, 前:z>0)
 	Vector3(-0.5, 0.5, -0.5),  # 左上后   (左:x<0, 上:y>0, 后:z<0)
 	Vector3(0.5, 0.5, -0.5),   # 右上后   (右:x>0, 上:y>0, 后:z<0)
-	Vector3(0.5, -0.5, 0.5),   # 右下前   (右:x>0, 下:y<0, 前:z>0)
-	Vector3(-0.5, -0.5, 0.5),  # 左下前   (左:x<0, 下:y<0, 前:z>0)
-	Vector3(-0.5, -0.5, -0.5), # 左下后   (左:x<0, 下:y<0, 后:z<0)
-	Vector3(0.5, -0.5, -0.5)   # 右下后   (右:x>0, 下:y<0, 后:z<0)
+	Vector3(0.5, -0.5, -0.5),  # 右下后   (右:x>0, 下:y<0, 后:z<0) -> DRB
+	Vector3(-0.5, -0.5, -0.5), # 左下后   (左:x<0, 下:y<0, 后:z<0) -> DBL
+	Vector3(-0.5, -0.5, 0.5),  # 左下前   (左:x<0, 下:y<0, 前:z>0) -> DLF
+	Vector3(0.5, -0.5, 0.5)    # 右下前   (右:x>0, 下:y<0, 前:z>0) -> DFR
 ]
 
 func _ready():
+	# 先做显示缩放/偏移，再生成角块
+	scale = Vector3.ONE * DISPLAY_SCALE
+	position = DISPLAY_OFFSET
 	# 场景加载完成后，生成 8 个角块
 	create_pieces()
 
@@ -123,8 +133,10 @@ func create_pieces():
 		return
 	
 	for pos in piece_positions:
+		var piece_id := piece_positions.find(pos)
 		# 从场景文件实例化CubePiece节点
 		var piece = piece_scene.instantiate()
+		piece.piece_id = piece_id
 		piece.logic_pos = pos
 		piece.position = pos * PIECE_SPACING
 		print("Created piece at position: " + str(piece.position))
@@ -160,9 +172,11 @@ func set_piece_colors(piece: CubePiece) -> void:
 
 	# 左右：始终使用 Face_X+ / Face_X-
 	if lp.x > 0.0:
-		piece.set_face_color("Face_X+", colors["green"])
+		# README 约定：右面=蓝色
+		piece.set_face_color("Face_X+", colors["blue"])
 	elif lp.x < 0.0:
-		piece.set_face_color("Face_X-", colors["blue"])
+		# README 约定：左面=绿色
+		piece.set_face_color("Face_X-", colors["green"])
 
 func get_pieces_by_x(x: int) -> Array:
 	return pieces.filter(func(p): return is_equal_approx(p.logic_pos.x, float(x) * 0.5))
@@ -196,12 +210,12 @@ func rotate_D() -> void:
 func rotate_F() -> void:
 	# 前层顺时针旋转
 	var pieces_to_rotate = get_pieces_by_z(1)
-	rotate_pieces(pieces_to_rotate, Vector3.FORWARD, -90)
+	rotate_pieces(pieces_to_rotate, DIR_FRONT, -90)
 
 func rotate_B() -> void:
 	# 后层顺时针旋转
 	var pieces_to_rotate = get_pieces_by_z(-1)
-	rotate_pieces(pieces_to_rotate, Vector3.FORWARD, 90)
+	rotate_pieces(pieces_to_rotate, DIR_FRONT, 90)
 
 # 逆时针旋转函数
 func rotate_R_counterclockwise() -> void:
@@ -227,12 +241,12 @@ func rotate_D_counterclockwise() -> void:
 func rotate_F_counterclockwise() -> void:
 	# 前层逆时针旋转
 	var pieces_to_rotate = get_pieces_by_z(1)
-	rotate_pieces(pieces_to_rotate, Vector3.FORWARD, 90)
+	rotate_pieces(pieces_to_rotate, DIR_FRONT, 90)
 
 func rotate_B_counterclockwise() -> void:
 	# 后层逆时针旋转
 	var pieces_to_rotate = get_pieces_by_z(-1)
-	rotate_pieces(pieces_to_rotate, Vector3.FORWARD, -90)
+	rotate_pieces(pieces_to_rotate, DIR_FRONT, -90)
 
 func rotate_pieces(pieces_to_rotate: Array, axis: Vector3, angle: float) -> void:
 	# 以临时 pivot 实现“整层刚体旋转”，避免局部轴/浮点误差导致逻辑映射失效
@@ -284,31 +298,28 @@ func _color_to_value(c: Color) -> int:
 	return 0
 
 func _get_piece_orientation(piece: CubePiece) -> int:
-	# 获取角块的可见颜色组合，用于计算朝向编码
-	var visible_colors = []
-	
-	# 获取三个可见面的颜色
-	if piece.logic_pos.x > 0:
-		visible_colors.append(_color_to_name(piece.get_face_color("Face_X+")))
-	elif piece.logic_pos.x < 0:
-		visible_colors.append(_color_to_name(piece.get_face_color("Face_X-")))
-	
-	if piece.logic_pos.y > 0:
-		visible_colors.append(_color_to_name(piece.get_face_color("Face_Y+")))
-	elif piece.logic_pos.y < 0:
-		visible_colors.append(_color_to_name(piece.get_face_color("Face_Y-")))
-	
-	if piece.logic_pos.z > 0:
-		visible_colors.append(_color_to_name(piece.get_face_color("Face_Z+")))
-	elif piece.logic_pos.z < 0:
-		visible_colors.append(_color_to_name(piece.get_face_color("Face_Z-")))
-	
-	# 获取角块的位置索引
+	# 根据 README 的“每个位置读取顺序”取该位置的 3 个世界方向颜色
+	# 然后在 orientation_mapping 中查出 0/1/2 朝向编码。
 	var pos_index = pos_to_index.get(piece.logic_pos, 0)
-	
-	# 根据颜色组合查找朝向编码
+	var dirs: Array[Vector3] = []
+	match pos_index:
+		0: dirs = [Vector3.UP, Vector3.RIGHT, DIR_FRONT]    # TRF -> wbr
+		1: dirs = [Vector3.UP, DIR_FRONT, Vector3.LEFT]     # TFL -> wrg
+		2: dirs = [Vector3.UP, Vector3.LEFT, DIR_BACK]      # TLB -> wgo
+		3: dirs = [Vector3.UP, DIR_BACK, Vector3.RIGHT]     # TBR -> wob
+		4: dirs = [Vector3.DOWN, Vector3.RIGHT, DIR_BACK]   # DRB -> ybo
+		5: dirs = [Vector3.DOWN, DIR_BACK, Vector3.LEFT]    # DBL -> yog
+		6: dirs = [Vector3.DOWN, Vector3.LEFT, DIR_FRONT]   # DLF -> ygr
+		7: dirs = [Vector3.DOWN, DIR_FRONT, Vector3.RIGHT]  # DFR -> yrb
+		_: dirs = [Vector3.UP, Vector3.RIGHT, DIR_FRONT]
+
+	var visible_colors: Array[String] = []
+	for d in dirs:
+		visible_colors.append(_color_to_name(piece.get_color_facing_world_dir(d)))
+
 	var mapping = orientation_mapping.get(pos_index, {})
-	return mapping.get(visible_colors, 0)
+	var key := ",".join(visible_colors)
+	return mapping.get(key, 0)
 
 func _color_to_name(c: Color) -> String:
 	# 将颜色转换为名称
@@ -319,22 +330,17 @@ func _color_to_name(c: Color) -> String:
 
 func get_cube_state() -> Array:
 	# 计算魔方状态为8个数字的数组
+	# 按 piece_id(0..7) 输出“该角块当前位置+朝向”的编码值，
+	# 与 README 的示例 [0,4,8,12,16,20,24,28] / U 后数组一致。
 	var state = []
-	
-	# 按照固定顺序检查每个角块的位置
-	for target_pos in piece_positions:
-		# 通过映射快速查找当前在目标位置的块
-		var current_piece = pos_to_piece.get(target_pos)
-		
-		if current_piece:
-			# 获取位置索引
-			var pos_index = pos_to_index.get(target_pos, 0)
-			# 获取朝向编码
-			var orientation = _get_piece_orientation(current_piece)
-			# 计算5位2进制编码的10进制值
-			var encoded_value = (pos_index << 2) | orientation
-			state.append(encoded_value)
-		else:
-			state.append(0)
+
+	var by_id := pieces.duplicate()
+	by_id.sort_custom(func(a: CubePiece, b: CubePiece): return a.piece_id < b.piece_id)
+
+	for piece in by_id:
+		var pos_index = pos_to_index.get(piece.logic_pos, 0)
+		var orientation = _get_piece_orientation(piece)
+		var encoded_value = (pos_index << 2) | orientation
+		state.append(encoded_value)
 	
 	return state

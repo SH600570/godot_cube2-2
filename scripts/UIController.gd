@@ -29,7 +29,10 @@ func create_status_label():
 	status_label.text = "魔方状态: " + str(cube.get_cube_state())
 	# 简单放在屏幕左上角
 	status_label.position = Vector2(20, 20)
-	status_label.add_theme_color_override("font_color", Color(0, 0, 0))
+	# 深色背景下使用高对比白字，并加描边防止与场景高光混在一起
+	status_label.add_theme_color_override("font_color", Color(0.96, 0.96, 0.98))
+	status_label.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+	status_label.add_theme_constant_override("outline_size", 2)
 	add_child(status_label)
 
 ## 监听全局输入事件，把按键映射到魔方动作
