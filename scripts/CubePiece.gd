@@ -131,6 +131,27 @@ func show_all_faces() -> void:
 func hide_internal_faces() -> void:
 	# 注意：角块会旋转，不能再靠固定面名判断“内部面”。
 	# 必须按“世界法线方向”判断哪些面朝向魔方中心。
+	
+	# 检查节点是否在场景树中，避免调用global_position时出错
+	if not is_inside_tree():
+		# 节点不在场景树中，使用基于逻辑坐标的简单判断
+		# 这种方法在节点旋转后可能不准确，但在初始化时足够用
+		if logic_pos.x > 0.0:
+			hide_face("Face_X-")
+		elif logic_pos.x < 0.0:
+			hide_face("Face_X+")
+
+		if logic_pos.y > 0.0:
+			hide_face("Face_Y-")
+		elif logic_pos.y < 0.0:
+			hide_face("Face_Y+")
+
+		if logic_pos.z > 0.0:
+			hide_face("Face_Z-")
+		elif logic_pos.z < 0.0:
+			hide_face("Face_Z+")
+		return
+	
 	var internal_dirs: Array[Vector3] = []
 	if logic_pos.x > 0.0:
 		internal_dirs.append(Vector3.LEFT)   # 右侧块，内部方向朝左

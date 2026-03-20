@@ -20,6 +20,14 @@ var _orbit_center: Vector3 = Vector3.ZERO
 var _right_dragging := false
 var _middle_dragging := false
 
+# 初始状态
+var initial_state = {
+	"yaw": _yaw,
+	"pitch": _pitch,
+	"distance": distance,
+	"orbit_center": _orbit_center
+}
+
 func _ready() -> void:
 	if target_path != NodePath(""):
 		_target = get_node_or_null(target_path) as Node3D
@@ -31,6 +39,13 @@ func _ready() -> void:
 	if distance > 0.0001:
 		_yaw = atan2(offset.x, offset.z)
 		_pitch = asin(clamp(offset.y / distance, -0.999, 0.999))
+	# 保存初始状态
+	initial_state = {
+		"yaw": _yaw,
+		"pitch": _pitch,
+		"distance": distance,
+		"orbit_center": _orbit_center
+	}
 	_update_camera_transform()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -74,3 +89,32 @@ func _update_camera_transform() -> void:
 	) * distance
 	global_position = _orbit_center + offset
 	look_at(_orbit_center, Vector3.UP)
+
+## 重置视角到初始状态
+func reset_view() -> void:
+	_yaw = initial_state["yaw"]
+	_pitch = initial_state["pitch"]
+	distance = initial_state["distance"]
+	_orbit_center = initial_state["orbit_center"]
+	_update_camera_transform()
+
+## 获取当前视角状态
+func get_current_view() -> Dictionary:
+	return {
+		"yaw": _yaw,
+		"pitch": _pitch,
+		"distance": distance,
+		"orbit_center": _orbit_center
+	}
+
+## 设置视角状态
+func set_view(view: Dictionary) -> void:
+	if "yaw" in view:
+		_yaw = view["yaw"]
+	if "pitch" in view:
+		_pitch = view["pitch"]
+	if "distance" in view:
+		distance = clamp(view["distance"], min_distance, max_distance)
+	if "orbit_center" in view:
+		_orbit_center = view["orbit_center"]
+	_update_camera_transform()
