@@ -3,11 +3,17 @@ class_name Cube2x2 extends Node3D
 ## 整个 2x2 魔方的“总控”脚本
 ## - 负责：生成 8 个角块、安排它们的位置、处理层旋转、计算状态
 ## - 不负责：贴纸节点结构（在 CubePiece.tscn 里）、输入事件（在 UIController.gd 里）
+signal move_started()
+signal move_finished()
 
 ## 所有角块节点的数组（方便遍历/重置）
 var pieces = []
 ## 逻辑坐标 -> 角块 的映射，用于 O(1) 找到某个位置的块
 var pos_to_piece = {}
+## 动画期间锁输入，避免重复转动造成状态错乱
+var is_rotating := false
+## 单步层转动画时长（秒）
+const ROTATE_ANIM_DURATION := 0.2
 ## 相邻角块中心间距（略大于 1），让 8 个角块之间出现可见裂缝
 const PIECE_SPACING := 1.03
 ## 仅用于显示大小，不改变逻辑坐标/状态计算。值越大，屏幕里看起来越大
@@ -189,62 +195,86 @@ func get_pieces_by_z(z: int) -> Array:
 
 func rotate_R() -> void:
 	# 右层顺时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_x(1)
 	rotate_pieces(pieces_to_rotate, Vector3.RIGHT, -90)
 
 func rotate_L() -> void:
 	# 左层顺时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_x(-1)
 	rotate_pieces(pieces_to_rotate, Vector3.RIGHT, 90)
 
 func rotate_U() -> void:
 	# 上层顺时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_y(1)
 	rotate_pieces(pieces_to_rotate, Vector3.UP, -90)
 
 func rotate_D() -> void:
 	# 下层顺时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_y(-1)
 	rotate_pieces(pieces_to_rotate, Vector3.UP, 90)
 
 func rotate_F() -> void:
 	# 前层顺时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_z(1)
 	rotate_pieces(pieces_to_rotate, DIR_FRONT, -90)
 
 func rotate_B() -> void:
 	# 后层顺时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_z(-1)
 	rotate_pieces(pieces_to_rotate, DIR_FRONT, 90)
 
 # 逆时针旋转函数
 func rotate_R_counterclockwise() -> void:
 	# 右层逆时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_x(1)
 	rotate_pieces(pieces_to_rotate, Vector3.RIGHT, 90)
 
 func rotate_L_counterclockwise() -> void:
 	# 左层逆时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_x(-1)
 	rotate_pieces(pieces_to_rotate, Vector3.RIGHT, -90)
 
 func rotate_U_counterclockwise() -> void:
 	# 上层逆时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_y(1)
 	rotate_pieces(pieces_to_rotate, Vector3.UP, 90)
 
 func rotate_D_counterclockwise() -> void:
 	# 下层逆时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_y(-1)
 	rotate_pieces(pieces_to_rotate, Vector3.UP, -90)
 
 func rotate_F_counterclockwise() -> void:
 	# 前层逆时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_z(1)
 	rotate_pieces(pieces_to_rotate, DIR_FRONT, 90)
 
 func rotate_B_counterclockwise() -> void:
 	# 后层逆时针旋转
+	if is_rotating:
+		return
 	var pieces_to_rotate = get_pieces_by_z(-1)
 	rotate_pieces(pieces_to_rotate, DIR_FRONT, -90)
 
@@ -252,6 +282,8 @@ func rotate_pieces(pieces_to_rotate: Array, axis: Vector3, angle: float) -> void
 	# 以临时 pivot 实现“整层刚体旋转”，避免局部轴/浮点误差导致逻辑映射失效
 	if pieces_to_rotate.is_empty():
 		return
+	is_rotating = true
+	move_started.emit()
 	var pivot := Node3D.new()
 	pivot.name = "RotatePivot"
 	add_child(pivot)
@@ -260,7 +292,14 @@ func rotate_pieces(pieces_to_rotate: Array, axis: Vector3, angle: float) -> void
 	for piece in pieces_to_rotate:
 		piece.reparent(pivot, true)
 
-	pivot.rotate(axis, deg_to_rad(angle))
+	var start_basis := pivot.basis
+	var end_basis := start_basis.rotated(axis.normalized(), deg_to_rad(angle))
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_method(func(weight: float):
+		pivot.basis = start_basis.slerp(end_basis, weight)
+	, 0.0, 1.0, ROTATE_ANIM_DURATION)
+	await tween.finished
 
 	for piece in pieces_to_rotate:
 		piece.reparent(self, true)
@@ -278,6 +317,8 @@ func rotate_pieces(pieces_to_rotate: Array, axis: Vector3, angle: float) -> void
 	for piece in pieces:
 		piece.show_all_faces()
 		piece.hide_internal_faces()
+	is_rotating = false
+	move_finished.emit()
 
 func reset() -> void:
 	# 重置魔方

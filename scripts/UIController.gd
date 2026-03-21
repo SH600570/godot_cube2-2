@@ -31,6 +31,7 @@ func _ready():
 	if cube == null:
 		print("Error: Failed to find Cube2x2 node")
 		return
+	cube.move_finished.connect(update_status)
 	
 	## 2. 找到相机节点
 	# 首先尝试在父节点的直接子节点中查找
@@ -69,6 +70,7 @@ func _ready():
 
 	## 3. 创建左上角的“魔方状态: xxxxxxxx”文本
 	create_status_label()
+	update_status()
 	
 	## 4. 创建右侧旋转操作按钮
 	create_rotation_buttons()
@@ -96,37 +98,31 @@ func _input(event):
 					cube.rotate_U_counterclockwise()
 				else:
 					cube.rotate_U()
-				update_status()
 			KEY_D: 
 				if shift_pressed:
 					cube.rotate_D_counterclockwise()
 				else:
 					cube.rotate_D()
-				update_status()
 			KEY_L: 
 				if shift_pressed:
 					cube.rotate_L_counterclockwise()
 				else:
 					cube.rotate_L()
-				update_status()
 			KEY_R: 
 				if shift_pressed:
 					cube.rotate_R_counterclockwise()
 				else:
 					cube.rotate_R()
-				update_status()
 			KEY_F: 
 				if shift_pressed:
 					cube.rotate_F_counterclockwise()
 				else:
 					cube.rotate_F()
-				update_status()
 			KEY_B: 
 				if shift_pressed:
 					cube.rotate_B_counterclockwise()
 				else:
 					cube.rotate_B()
-				update_status()
 			KEY_SPACE: 
 				# 重置魔方，需要输入"reset"确认
 				reset_with_confirmation()
@@ -213,7 +209,6 @@ func create_rotation_buttons():
 		# 使用闭包确保每个按钮调用正确的方法
 		button.pressed.connect(func(func_name = button_config["func"]):
 			call(func_name)
-			update_status()
 		)
 		button_container.add_child(button)
 
