@@ -118,6 +118,18 @@ func _ready():
 	position = DISPLAY_OFFSET
 	# 场景加载完成后，生成 8 个角块
 	create_pieces()
+	var face_hints := FaceHintArrows.new()
+	face_hints.name = "FaceHintArrows"
+	add_child(face_hints)
+
+func _input(event: InputEvent) -> void:
+	# 让面箭头射线检测先于 UIController 等节点处理（同深度下子节点顺序见场景树）
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			var fh := get_node_or_null("FaceHintArrows") as FaceHintArrows
+			if fh:
+				fh._try_pick_rotate(mb)
 
 ## 把一个任意 Vector3“吸附”到最近的逻辑坐标上
 ## 逻辑坐标以 0.5 为步长（±0.5），这样 8 个角块刚好拼成正方体
@@ -280,28 +292,28 @@ func rotate_B_counterclockwise() -> void:
 
 func rotate_pieces(pieces_to_rotate: Array, axis: Vector3, angle: float) -> void:
 	# 以临时 pivot 实现“整层刚体旋转”，避免局部轴/浮点误差导致逻辑映射失效
-	if pieces_to_rotate.is_empty():
+	if pieces_to_rotate.is_empty(): # 如果需要旋转的角块列表为空，则直接返回
 		return
-	is_rotating = true
-	move_started.emit()
+	is_rotating = true # 设置旋转状态为 true，避免重复旋转
+	move_started.emit() # 发射旋转开始信号
 	var pivot := Node3D.new()
-	pivot.name = "RotatePivot"
-	add_child(pivot)
-	pivot.transform = Transform3D.IDENTITY
+	pivot.name = "RotatePivot" # 设置旋转轴节点名称为 "RotatePivot"
+	add_child(pivot) # 将旋转轴节点添加到当前节点
+	pivot.transform = Transform3D.IDENTITY # 设置旋转轴节点变换为单位变换
 
 	for piece in pieces_to_rotate:
-		piece.reparent(pivot, true)
+		piece.reparent(pivot, true) # 将角块节点添加到旋转轴节点
 
 	var start_basis := pivot.basis
-	var end_basis := start_basis.rotated(axis.normalized(), deg_to_rad(angle))
+	var end_basis := start_basis.rotated(axis.normalized(), deg_to_rad(angle)) # 计算旋转后的变换
 	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT) # 设置插值类型为正弦插值，缓动方式为缓入缓出
 	tween.tween_method(func(weight: float):
-		pivot.basis = start_basis.slerp(end_basis, weight)
-	, 0.0, 1.0, ROTATE_ANIM_DURATION)
-	await tween.finished
+		pivot.basis = start_basis.slerp(end_basis, weight) # 插值计算旋转轴节点变换
+	, 0.0, 1.0, ROTATE_ANIM_DURATION) # 设置插值时间
+	await tween.finished # 等待插值完成		
 
-	for piece in pieces_to_rotate:
+	for piece in pieces_to_rotate: 
 		piece.reparent(self, true)
 		piece.logic_pos = _snap_logic_pos(piece.position / PIECE_SPACING)
 		piece.position = piece.logic_pos * PIECE_SPACING

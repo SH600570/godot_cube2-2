@@ -86,6 +86,8 @@ func create_status_label():
 	status_label.add_theme_color_override("font_color", Color(0.96, 0.96, 0.98))
 	status_label.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
 	status_label.add_theme_constant_override("outline_size", 2)
+	# 不拦截鼠标，让 3D 面箭头射线检测能收到左键
+	status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(status_label)
 
 ## 监听全局输入事件，把按键映射到魔方动作
@@ -177,13 +179,10 @@ func create_rotation_buttons():
 	button_container.size = Vector2(150, 400)
 	add_child(button_container)
 
-	# 创建标题
-	var title = Label.new()
-	title.text = "旋转操作"
-	title.add_theme_color_override("font_color", Color(0.96, 0.96, 0.98))
-	title.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
-	title.add_theme_constant_override("outline_size", 2)
-	button_container.add_child(title)
+	# 仅隐藏「U/D/L…」文字按钮；面外箭头为主操作。视角相关按钮保留。
+	var rotation_section := VBoxContainer.new()
+	rotation_section.name = "RotationTextButtons"
+	button_container.add_child(rotation_section)
 
 	# 旋转按钮配置
 	var rotation_buttons = [
@@ -210,7 +209,9 @@ func create_rotation_buttons():
 		button.pressed.connect(func(func_name = button_config["func"]):
 			call(func_name)
 		)
-		button_container.add_child(button)
+		rotation_section.add_child(button)
+
+	rotation_section.visible = false
 
 	# 创建重置视角按钮
 	var reset_view_button = Button.new()
